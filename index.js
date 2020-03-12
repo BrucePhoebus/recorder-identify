@@ -13,21 +13,30 @@
 	init()
 	
 	function init () {
-		// 监听语音图标点击录音事件
-		getRecordPermission()
-		$('#rIdentify').click(function () {
-			// 开始录音
-			if (isRecord !== undefined) {
-				if (!isRecord) {
-					startH5Record()
-				} else {
-					closeH5Record()
-				}
-			} else {
-				// 如果是undefined表示不可用
-				alert('请确认麦克风未被禁用！')
+		var head = document.getElementsByTagName('head')[0];
+		var script = document.createElement('script');
+		script.type = 'text/javascript';
+		script.onload = script.onreadystatechange = function () {
+			if (!this.readyState || this.readyState === "loaded" || this.readyState === "complete") {
+				// 监听语音图标点击录音事件
+				getRecordPermission()
+				$('#rIdentify').click(function () {
+					// 开始录音
+					if (isRecord !== undefined) {
+						if (!isRecord) {
+							startH5Record()
+						} else {
+							closeH5Record()
+						}
+					} else {
+						// 如果是undefined表示不可用
+						alert('请确认麦克风未被禁用！')
+					}
+				})
 			}
-		})
+		};
+		script.src = './plugins/recorder.wav.min.js';
+		head.appendChild(script);
 	}
 	
 	// 获取麦克风权限进行初始化
@@ -104,7 +113,9 @@
 			contentType: false,
 			success: function (res) {
 				if (res.data) {
-					alert(res.data)
+					if ($('#rIdentify').data('search-id')) {
+						$('#' + $('#rIdentify').data('search-id')).val(res.data)
+					}
 				}
 			},
 			error: function (error) {
@@ -113,25 +124,9 @@
 		})
 	}
 	
-	// 添加音频到屏幕
-	function audioToScreen (blob) {
-		var url = URL.createObjectURL(blob)
-		var div = document.createElement('div')
-		var au = document.createElement('audio')
-		au.style.cssText = 'height: 35px;position: relative;right: 0;margin: 5px;max-width: 80%;'
-		var hf = document.createElement('a')
-		
-		au.controls = true
-		au.src = url
-		hf.href = url
-		hf.download = new Date().toISOString() + '.' + recorderConfig.mimeType.split('/')[1]
-		div.title = hf.download
-		div.appendChild(au)
-		div.appendChild(hf)
-		document.getElementById('intelligentQAInfo').appendChild(div)
-	}
 	// 录音提示
 	var setTimeoutTip = null;
+	
 	function inputTip (message) {
 		if (setTimeoutTip && $('#rIdentifyTip')) {
 			clearTimeout(setTimeoutTip);
@@ -141,7 +136,7 @@
 		div.id = 'rIdentifyTip';
 		div.style.cssText = 'position: absolute; top: ' + ($('#rIdentify')[0].offsetTop - 20) +
 			'px;left: ' + $('#rIdentify')[0].offsetLeft + 'px;border-radius: 8px;margin-top: -15px;' +
-			'color: #fff;background-color: #409eff;padding: 5px 0;'
+			'color: #fff;background-color: #409eff;padding: 5px 0;z-index: 2147483647;'
 		var span = document.createElement('span')
 		span.innerText = message;
 		span.style.cssText = 'margin: 0 10px;'
