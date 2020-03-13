@@ -35,7 +35,7 @@
 				})
 			}
 		};
-		script.src = './plugins/recorder.wav.min.js';
+		script.src = '../plugins/recorder.wav.min.js';
 		head.appendChild(script);
 	}
 	
@@ -107,7 +107,7 @@
 		formData.append('file', blob, new Date().getTime() + '.' + recorderConfig.mimeType.split('/')[1])
 		$.ajax({
 			url: '/robot/rs/qa/asr',
-			type: 'post',
+			type: 'POST',
 			data: formData,
 			processData: false,
 			contentType: false,
