@@ -1,9 +1,10 @@
 {
   "name": "recorder-identify",
-  "version": "0.0.1",
-  "description": "一个语音识别组件",
+  "version": "1.0.0",
+  "description": "语音识别插件",
   "main": "lib/index.js",
   "scripts": {
+		"gulp": "gulp",
     "build": "npm run build:lib && npm run build:browserify",
     "build:lib": "babel src/ -d lib/",
     "build:browserify": "browserify lib/index.js -t babelify --outfile dist/rIdentify.js -s rIdentify",

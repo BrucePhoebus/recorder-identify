@@ -12,11 +12,13 @@ gulp.task('connect', function () {
 		livereload: true
 	})
 });
+
 gulp.task('sync', function () {
 	gulp.src('src/recorder-identify.js')
 		.pipe(connect.reload())
 })
 
+// 转码编译输出
 gulp.task('browserify', function (cb) {
 	del(['dist/rIdentify.js'], cb)
 	// 定义入口文件
@@ -40,6 +42,7 @@ gulp.task('browserify', function (cb) {
 	.pipe(gulp.dest('dist/'))
 })
 
+// 压缩输出
 gulp.task('compressJS', function (cb) {
 	del(['dist/rIdentify.min.js'], cb)
 	return gulp.src('dist/rIdentify.js')
@@ -53,6 +56,7 @@ gulp.task('compressJS', function (cb) {
 		.pipe(gulp.dest('dist'));  //输出
 })
 
+// 将已有插件清除console等不必要的后输出
 gulp.task('reUglify', function () {
 	return gulp.src('plugins/recorder.wav.min.js')
 	.pipe(uglify({
@@ -65,8 +69,9 @@ gulp.task('reUglify', function () {
 })
 
 /*
-* gulp.series：按照顺序执行
-* gulp.parallel：可以并行计算
+* 执行gulp默认顺序执行browserify、compressJS两个任务
+* 	gulp.series：按照顺序执行
+* 	gulp.parallel：可以并行计算
 * */
 gulp.task('default', gulp.series('browserify', 'compressJS', () => {
 }));
