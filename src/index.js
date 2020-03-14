@@ -1,1 +1,1 @@
-module.exports = require("./recorder-identify").rIdentify;
+module.exports = require("./recorder-identify").RIdentify;

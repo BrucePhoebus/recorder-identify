@@ -6,19 +6,11 @@
   "scripts": {
     "build": "npm run build:lib && npm run build:browserify",
     "build:lib": "babel src/ -d lib/",
-    "build:browserify": "browserify lib/index.js -t babelify --outfile dist/recorder.js -s Recorder",
+    "build:browserify": "browserify lib/index.js -t babelify --outfile dist/rIdentify.js -s rIdentify",
     "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/zlokomatic/Recorderjs.git"
   },
   "author": "",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/zlokomatic/Recorderjs/issues"
-  },
-  "homepage": "https://github.com/zlokomatic/Recorderjs#readme",
   "dependencies": {
     "inline-worker": "^0.1.0"
   },
