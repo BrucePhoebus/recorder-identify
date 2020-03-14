@@ -22,8 +22,8 @@ export class RIdentify {
 		addRecordPlugin();
 		
 		function addRecordPlugin () {
-			var head = document.getElementsByTagName('head')[0];
-			var script = document.createElement('script');
+			let head = document.getElementsByTagName('head')[0];
+			let script = document.createElement('script');
 			script.type = 'text/javascript';
 			script.onload = script.onreadystatechange = function () {
 				if (!this.readyState || this.readyState === "loaded" || this.readyState === "complete") {
@@ -44,7 +44,8 @@ export class RIdentify {
 					})
 				}
 			};
-			script.src = 'https://ht.dsjfzj.gxzf.gov.cn/jsq/rIdentify/plugins/recorder.wav.min.js';
+			script.src = 'dist/recorder.wav.min.js';
+			// script.src = 'https://ht.dsjfzj.gxzf.gov.cn/jsq/rIdentify/plugins/recorder.wav.min.js';
 			head.appendChild(script);
 		}
 		
@@ -138,17 +139,18 @@ export class RIdentify {
 		
 		// 录音提示
 		let setTimeoutTip = null;
+		
 		function inputTip (message) {
 			if (setTimeoutTip && $('#rIdentifyTip')) {
 				clearTimeout(setTimeoutTip);
 				$('#rIdentifyTip').remove();
 			}
-			var div = document.createElement('div')
+			let div = document.createElement('div')
 			div.id = 'rIdentifyTip';
 			div.style.cssText = 'position: absolute; top: ' + ($('#rIdentify')[0].offsetTop - 20) +
 				'px;left: ' + $('#rIdentify')[0].offsetLeft + 'px;border-radius: 8px;margin-top: -15px;' +
 				'color: #fff;background-color: #409eff;padding: 5px 0;z-index: 2147483647;'
-			var span = document.createElement('span')
+			let span = document.createElement('span')
 			span.innerText = message;
 			span.style.cssText = 'margin: 0 10px;'
 			div.appendChild(span)
