@@ -22,31 +22,20 @@ export class RIdentify {
 		addRecordPlugin();
 		
 		function addRecordPlugin () {
-			let head = document.getElementsByTagName('head')[0];
-			let script = document.createElement('script');
-			script.type = 'text/javascript';
-			script.onload = script.onreadystatechange = function () {
-				if (!this.readyState || this.readyState === "loaded" || this.readyState === "complete") {
-					// 监听语音图标点击录音事件
-					getRecordPermission()
-					$('#rIdentify').click(function () {
-						// 开始录音
-						if (isRecord !== undefined) {
-							if (!isRecord) {
-								startH5Record()
-							} else {
-								closeH5Record()
-							}
-						} else {
-							// 如果是undefined表示不可用
-							inputTip('请确认麦克风未被禁用！')
-						}
-					})
+			getRecordPermission();
+			$('#rIdentify').click(function () {
+				// 开始录音
+				if (isRecord !== undefined) {
+					if (!isRecord) {
+						startH5Record()
+					} else {
+						closeH5Record()
+					}
+				} else {
+					// 如果是undefined表示不可用
+					inputTip('请确认麦克风未被禁用！')
 				}
-			};
-			script.src = 'dist/recorder.wav.min.js';
-			// script.src = 'https://ht.dsjfzj.gxzf.gov.cn/jsq/rIdentify/plugins/recorder.wav.min.js';
-			head.appendChild(script);
+			})
 		}
 		
 		// 获取麦克风权限进行初始化
