@@ -123,10 +123,56 @@ gulp.task('mini_lib', function() {
 	.pipe(gulp.dest('dist/lib/'));
 });
 
+// 编译压缩成 plugins
+gulp.task('browserify_rd_plugin', function (cb) {
+	del(['plugin/rIdentify.min.js'], cb)
+	// 定义入口文件
+	return browserify({
+		// 入口必须是转换过的es6文件，且文件不能是es6经过转换的es5文件，否者会报错
+		entries: 'src/index.js',
+		debug: true
+	})
+	// 在bundle之前先转换es6，因为readabel stream 流没有transform方法
+	.transform("babelify", { presets: ['es2015', 'stage-0'] })
+	// 转成stream流（stream流分小片段传输）
+	.bundle()
+	.on('error', function (error) {
+		console.log(error.toString())
+	})
+	// node系只有content，添加名字转成gulp系可操作的流
+	.pipe(stream('rIdentify.js'))
+	// 转成二进制的流（二进制方式整体传输）
+	.pipe(buffer())
+	.pipe(uglify({
+		compress: {
+			drop_console: true,  // 过滤 console
+			drop_debugger: true  // 过滤 debugger
+		}
+	}))    //压缩
+	.pipe(rename('rIdentify.min.js'))
+	.pipe(gulp.dest('plugins'));  //输出
+})
+
+// 合并压缩库的JS文件 - plugins：jquery-3.4.1.min.js、recorder.wav.min.js、rIdentify.min.js
+gulp.task('min_plugins', function() {
+	return gulp.src(['plugins/*.min.js'])
+	.pipe(concat('rIdentify.min.js'))
+	.pipe(uglify({
+		compress: {
+			drop_console: true,  // 过滤 console
+			drop_debugger: true  // 过滤 debugger
+		}
+	}))
+	.pipe(gulp.dest('plugins'))
+});
+
 /*
 * 执行gulp默认顺序执行browserify、compressJS两个任务
 * 	gulp.series：按照顺序执行
 * 	gulp.parallel：可以并行计算
 * */
 gulp.task('default', gulp.series('browserify', 'compressJS', 'mini_lib', () => {
+}));
+
+gulp.task('uglify_min_plugin', gulp.series('browserify_rd_plugin', 'min_plugins', () => {
 }));
