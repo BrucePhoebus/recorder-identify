@@ -155,6 +155,7 @@ gulp.task('browserify_rd_plugin', function (cb) {
 
 // 合并压缩库的JS文件 - plugins：jquery-3.4.1.min.js、recorder.wav.min.js、rIdentify.min.js
 gulp.task('min_plugins', function() {
+	del(['dist/plugins/rIdentify.min.js'], cb)
 	return gulp.src(['plugins/*.min.js'])
 	.pipe(concat('rIdentify.min.js'))
 	.pipe(uglify({
@@ -163,7 +164,7 @@ gulp.task('min_plugins', function() {
 			drop_debugger: true  // 过滤 debugger
 		}
 	}))
-	.pipe(gulp.dest('plugins'))
+	.pipe(gulp.dest('dist/plugins'))
 });
 
 /*
