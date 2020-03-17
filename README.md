@@ -6,7 +6,7 @@
 
 #### 独立式 - /dist/plugins
 
-* 将JQ和语音识别插件recorder.wav.min.js集成进去，导入这个文件，和配HTML就可以使用语音识别功能了
+* 将JQ和语音识别插件recorder.wav.min.js集成进RIdentify.min.js，导入这个文件，和配HTML就可以使用语音识别功能了
 
 > 可以考虑舍去JQ开发，进一步可以抽取语音识别插件
 

@@ -6,7 +6,8 @@ const gulp = require('gulp'),
 	del = require('del'),
 	buffer = require('vinyl-buffer'),
 	stream = require('vinyl-source-stream'),
-	rename = require('gulp-rename');
+	rename = require('gulp-rename'),
+	watch = require('gulp-watch');
 
 gulp.task('connect', function () {
 	connect.server({
@@ -16,7 +17,7 @@ gulp.task('connect', function () {
 
 gulp.task('sync', function () {
 	gulp.src('src/recorder-identify.js')
-		.pipe(connect.reload())
+	.pipe(connect.reload())
 })
 
 // 转码编译输出
@@ -29,7 +30,7 @@ gulp.task('browserify', function (cb) {
 		debug: true
 	})
 	// 在bundle之前先转换es6，因为readabel stream 流没有transform方法
-	.transform("babelify", { presets: ['es2015', 'stage-0'] })
+	.transform("babelify", {presets: ['es2015', 'stage-0']})
 	// 转成stream流（stream流分小片段传输）
 	.bundle()
 	.on('error', function (error) {
@@ -53,7 +54,7 @@ gulp.task('browserify-h5-recorder', function (cb) {
 		debug: true
 	})
 	// 在bundle之前先转换es6，因为readabel stream 流没有transform方法
-	.transform("babelify", { presets: ['es2015', 'stage-0'] })
+	.transform("babelify", {presets: ['es2015', 'stage-0']})
 	// 转成stream流（stream流分小片段传输）
 	.bundle()
 	.on('error', function (error) {
@@ -71,14 +72,14 @@ gulp.task('browserify-h5-recorder', function (cb) {
 gulp.task('compressJS', function (cb) {
 	del(['dist/rIdentify.min.js'], cb)
 	return gulp.src('dist/rIdentify.js')
-		.pipe(uglify({
-			compress: {
-				drop_console: true,  // 过滤 console
-				drop_debugger: true  // 过滤 debugger
-			}
-		}))    //压缩
-		.pipe(rename('rIdentify.min.js'))
-		.pipe(gulp.dest('dist'));  //输出
+	.pipe(uglify({
+		compress: {
+			drop_console: true,  // 过滤 console
+			drop_debugger: true  // 过滤 debugger
+		}
+	}))    //压缩
+	.pipe(rename('rIdentify.min.js'))
+	.pipe(gulp.dest('dist'));  //输出
 })
 
 // 合并压缩输出
@@ -109,9 +110,10 @@ gulp.task('reUglify', function () {
 })
 
 // 合并压缩库的JS文件
-gulp.task('mini_lib', function() {
-	return gulp.src(['dist/recorder.wav.min.js', 'dist/rIdentify.min.js'])
-	.pipe(concat('RIdentify.js'))
+gulp.task('mini_lib', function (cb) {
+	del(['dist/rIdentify.min.js'], cb)
+	return gulp.src(['plugins/recorder.wav.min.js', 'plugins/rIdentify.min.js'])
+	.pipe(concat('rIdentify.js'))
 	.pipe(gulp.dest('dist/lib/'))
 	.pipe(rename({suffix: '.min'}))
 	.pipe(uglify({
@@ -133,7 +135,7 @@ gulp.task('browserify_rd_plugin', function (cb) {
 		debug: true
 	})
 	// 在bundle之前先转换es6，因为readabel stream 流没有transform方法
-	.transform("babelify", { presets: ['es2015', 'stage-0'] })
+	.transform("babelify", {presets: ['es2015', 'stage-0']})
 	// 转成stream流（stream流分小片段传输）
 	.bundle()
 	.on('error', function (error) {
@@ -143,20 +145,32 @@ gulp.task('browserify_rd_plugin', function (cb) {
 	.pipe(stream('rIdentify.js'))
 	// 转成二进制的流（二进制方式整体传输）
 	.pipe(buffer())
-	.pipe(uglify({
-		compress: {
-			drop_console: true,  // 过滤 console
-			drop_debugger: true  // 过滤 debugger
-		}
-	}))    //压缩
+	.pipe(uglify(
+		/*{
+			compress: {
+				drop_console: true,  // 过滤 console
+				drop_debugger: true  // 过滤 debugger
+			}
+		}*/
+	))    //压缩
 	.pipe(rename('rIdentify.min.js'))
 	.pipe(gulp.dest('plugins'));  //输出
 })
 
 // 合并压缩库的JS文件 - plugins：jquery-3.4.1.min.js、recorder.wav.min.js、rIdentify.min.js
-gulp.task('min_plugins', function() {
+gulp.task('min_plugins', function (cb) {
 	del(['dist/plugins/rIdentify.min.js'], cb)
 	return gulp.src(['plugins/*.min.js'])
+	.pipe(concat('rIdentify.min.js'))
+	.pipe(uglify())
+	.pipe(gulp.dest('dist/plugins'))
+});
+
+
+// 合并压缩库的JS文件 - plugins：recorder.wav.min.js、rIdentify.min.js
+gulp.task('min_plugins_basic', function (cb) {
+	del(['dist/plugins2/rIdentify.min.js'], cb)
+	return gulp.src(['plugins/recorder.wav.min.js', 'plugins/rIdentify.min.js'])
 	.pipe(concat('rIdentify.min.js'))
 	.pipe(uglify({
 		compress: {
@@ -164,7 +178,7 @@ gulp.task('min_plugins', function() {
 			drop_debugger: true  // 过滤 debugger
 		}
 	}))
-	.pipe(gulp.dest('dist/plugins'))
+	.pipe(gulp.dest('dist/plugins2'))
 });
 
 /*
@@ -175,5 +189,31 @@ gulp.task('min_plugins', function() {
 gulp.task('default', gulp.series('browserify', 'compressJS', 'mini_lib', () => {
 }));
 
-gulp.task('uglify_min_plugin', gulp.series('browserify_rd_plugin', 'min_plugins', () => {
+gulp.task('uglify_min_plugin', gulp.series('browserify_rd_plugin', 'min_plugins_basic', () => {
 }));
+
+// 创建文件修改监听任务
+gulp.task('watch', function () {
+	// 源码有改动就进行压缩以及热刷新
+	return watch('src/*.js', function () {
+		gulp.start('browserify_rd_plugin');
+	})
+})
+
+// 创建热加载任务
+gulp.task('reload', function () {
+	gulp.src('plugins/rIdentify.min.js')
+	.pipe(connect.reload())
+	console.log('reload')
+})
+
+// gulp服务器
+gulp.task('server', function () {
+	connect.server({
+		root: 'src',
+		livereload: true
+	})
+})
+
+// 默认任务
+gulp.task('host', gulp.series('server', 'watch'));

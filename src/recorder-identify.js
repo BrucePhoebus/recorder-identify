@@ -24,6 +24,9 @@ export class RIdentify {
 		function addRecordPlugin () {
 			getRecordPermission();
 			$('#rIdentify').click(function () {
+				if (window.location.href.indexOf('https') === -1) {
+					inputTip('请在https安全状态下使用录音功能！');
+				}
 				// 开始录音
 				if (isRecord !== undefined) {
 					if (!isRecord) {
@@ -52,7 +55,6 @@ export class RIdentify {
 			newRec.open(function () {
 				// 打开麦克风授权获得相关资源
 				rec = newRec;
-				console.log(rec)
 			}, function (msg, isUserNotAllow) {
 				// 用户拒绝未授权或不支持
 				inputTip((isUserNotAllow ? 'UserNotAllow，' : '') + '打开录音失败：' + msg, 1)
@@ -130,23 +132,22 @@ export class RIdentify {
 		let setTimeoutTip = null;
 		
 		function inputTip (message) {
-			if (setTimeoutTip && $('#rIdentifyTip')) {
-				clearTimeout(setTimeoutTip);
+			if ($('#rIdentifyTip')) {
 				$('#rIdentifyTip').remove();
+				if(setTimeoutTip) clearTimeout(setTimeoutTip);
 			}
 			let div = document.createElement('div')
 			div.id = 'rIdentifyTip';
-			div.style.cssText = 'position: absolute; top: ' + ($('#rIdentify')[0].offsetTop - 20) +
-				'px;left: ' + $('#rIdentify')[0].offsetLeft + 'px;border-radius: 8px;margin-top: -15px;' +
+			div.style.cssText = 'position: absolute; bottom: 30px;border-radius: 8px;margin-top: -15px;' +
 				'color: #fff;background-color: #409eff;padding: 5px 0;z-index: 2147483647;'
 			let span = document.createElement('span')
 			span.innerText = message;
-			span.style.cssText = 'margin: 0 10px;'
+			span.style.cssText = 'margin: 0 10px;white-space: nowrap;'
 			div.appendChild(span)
 			document.getElementById('rIdentify').appendChild(div)
 			setTimeoutTip = setTimeout(function () {
 				$('#rIdentifyTip').remove()
-			}, 2000)
+			}, 3000)
 		}
 	}
 }
