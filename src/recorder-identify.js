@@ -24,9 +24,6 @@ export class RIdentify {
 		function addRecordPlugin () {
 			getRecordPermission();
 			$('#rIdentify').click(function () {
-				if (window.location.href.indexOf('https') === -1) {
-					inputTip('请在https安全状态下使用录音功能！');
-				}
 				// 开始录音
 				if (isRecord !== undefined) {
 					if (!isRecord) {
@@ -65,7 +62,7 @@ export class RIdentify {
 		function startH5Record () {
 			if (rec && Recorder.IsOpen()) {
 				rec.start()
-				inputTip('开始录音...再次点击录音终止！')
+				inputTip('开始录音');
 				isRecord = !isRecord
 				startTime = new Date()
 				recordTime = setInterval(function () {
@@ -96,7 +93,7 @@ export class RIdentify {
 						inputTip('录音太短不可用！')
 						return
 					} else {
-						inputTip('录音结束...')
+						inputTip('录音结束')
 					}
 					audioIdentify(blob)
 				}, function (msg) {
@@ -138,16 +135,17 @@ export class RIdentify {
 			}
 			let div = document.createElement('div')
 			div.id = 'rIdentifyTip';
-			div.style.cssText = 'position: absolute; bottom: 30px;border-radius: 8px;margin-top: -15px;' +
+			div.style.cssText = 'position: absolute; top: ' + ($('#rIdentify')[0].offsetTop - 20) +
+				'px;left: ' + $('#rIdentify')[0].offsetLeft + 'px;border-radius: 8px;margin-top: -15px;' +
 				'color: #fff;background-color: #409eff;padding: 5px 0;z-index: 2147483647;'
 			let span = document.createElement('span')
 			span.innerText = message;
 			span.style.cssText = 'margin: 0 10px;white-space: nowrap;'
 			div.appendChild(span)
-			document.getElementById('rIdentify').appendChild(div)
+			$('#rIdentify').after(div)
 			setTimeoutTip = setTimeout(function () {
 				$('#rIdentifyTip').remove()
-			}, 3000)
+			}, 6000)
 		}
 	}
 }
