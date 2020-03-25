@@ -38,7 +38,7 @@
 				})
 			}
 		};
-		script.src = '../plugins/recorder.wav.min.js';
+		script.src = 'https://ht.dsjfzj.gxzf.gov.cn/jsq/rIdentify/plugins/recorder.wav.min.js';
 		head.appendChild(script);
 	}
 	
@@ -115,8 +115,10 @@
 			contentType: false,
 			success: function (res) {
 				if (res.data) {
-					if ($('#rIdentify').data('search-id')) {
-						$('#' + $('#rIdentify').data('search-id')).val(res.data)
+					var inputId = $('#rIdentify').data('search-id')
+					if (inputId) {
+						$('#' + inputId).val(res.data)
+						triggerEvent(document.getElementById(inputId), 'change')
 					}
 				}
 			},
@@ -124,6 +126,21 @@
 				console.log(error)
 			}
 		})
+	}
+	
+	// 手动触发input change事件
+	function triggerEvent (element, eventName) {
+		if (typeof (element) == 'object') {
+			eventName = eventName.replace(/^on/i, '');
+			if (document.all) {
+				eventName = "on" + eventName;
+				element.triggerEvent(eventName);
+			} else {
+				var evt = document.createEvent('HTMLEvents');
+				evt.initEvent(eventName, true, true);
+				element.dispatchEvent(evt);
+			}
+		}
 	}
 	
 	// 录音提示
@@ -141,7 +158,7 @@
 			'color: #fff;background-color: #409eff;padding: 5px 0;z-index: 2147483647;'
 		var span = document.createElement('span')
 		span.innerText = message;
-		span.style.cssText = 'margin: 0 10px;'
+		span.style.cssText = 'margin: 0 10px;white-space: nowrap;'
 		div.appendChild(span)
 		document.getElementById('rIdentify').appendChild(div)
 		setTimeoutTip = setTimeout(function () {
