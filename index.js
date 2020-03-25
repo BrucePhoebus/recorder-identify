@@ -3,6 +3,7 @@
 	var startTime = 0;
 	var recordTime = null
 	var rec
+	var message = null;
 	var isRecord = false
 	var recorderConfig = {
 		numChannels: 1,
@@ -21,19 +22,11 @@
 				// 监听语音图标点击录音事件
 				getRecordPermission()
 				$('#rIdentify').click(function () {
-					if (window.location.href.indexOf('https') === -1) {
-						inputTip('请在https安全状态下使用录音功能！');
-					}
 					// 开始录音
-					if (isRecord !== undefined) {
-						if (!isRecord) {
-							startH5Record()
-						} else {
-							closeH5Record()
-						}
+					if (!isRecord) {
+						startH5Record()
 					} else {
-						// 如果是undefined表示不可用
-						alert('请确认麦克风未被禁用！')
+						closeH5Record()
 					}
 				})
 			}
@@ -55,7 +48,8 @@
 		newRec.open(function () {//打开麦克风授权获得相关资源
 			rec = newRec
 		}, function (msg, isUserNotAllow) {//用户拒绝未授权或不支持
-			alert((isUserNotAllow ? 'UserNotAllow，' : '') + '打开录音失败：' + msg, 1)
+			message = (isUserNotAllow ? 'UserNotAllow，' : '') + '打开录音失败：' + msg;
+			console.log((isUserNotAllow ? 'UserNotAllow，' : '') + '打开录音失败：' + msg, 1)
 		})
 	}
 	
@@ -73,7 +67,7 @@
 				}
 			}, 21000)
 		} else {
-			alert('未打开录音')
+			alert(message || '未打开录音')
 		}
 	}
 	
