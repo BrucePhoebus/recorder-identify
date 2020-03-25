@@ -23,14 +23,21 @@ export class RIdentify {
 		
 		function addRecordPlugin () {
 			getRecordPermission();
-			$('#rIdentify').click(function () {
+			// 监听语音按钮鼠标按下事件
+			document.getElementById('rIdentify').addEventListener('mousedown', function () {
 				// 开始录音
 				if (isRecord !== undefined) {
-					if (!isRecord) {
-						startH5Record()
-					} else {
-						closeH5Record()
-					}
+					startRecord()
+				} else {
+					// 如果是undefined表示不可用
+					inputTip('请确认麦克风未被禁用！')
+				}
+			})
+			// 监听语音按钮鼠标释放事件
+			document.getElementById('rIdentify').addEventListener('mouseup', function () {
+				// 开始录音
+				if (isRecord !== undefined) {
+					stopRecord()
 				} else {
 					// 如果是undefined表示不可用
 					inputTip('请确认麦克风未被禁用！')
@@ -58,17 +65,23 @@ export class RIdentify {
 			})
 		}
 		
+		let recordTipObj = null,
+			point = '开始录音';
 		// 点击开始录音
-		function startH5Record () {
+		function startRecord () {
 			if (rec && Recorder.IsOpen()) {
 				rec.start()
-				inputTip('开始录音');
+				inputTip(point);
+				recordTipObj = setInterval(() => {
+					point += '.'
+					inputTip(point);
+				}, 1000);
 				isRecord = !isRecord
 				startTime = new Date()
 				recordTime = setInterval(function () {
 					// 20秒
 					if (startTime && new Date().getTime() - startTime.getTime() >= timing) {
-						closeH5Record()
+						stopRecord()
 					}
 				}, timing)
 			} else {
@@ -77,7 +90,9 @@ export class RIdentify {
 		}
 		
 		// 结束录音
-		function closeH5Record () {
+		function stopRecord () {
+			clearInterval(recordTipObj)
+			point = '开始录音'
 			if (rec) {
 				rec.stop(function (blob, duration) {
 					isRecord = !isRecord
@@ -116,6 +131,7 @@ export class RIdentify {
 					if (res.data) {
 						if ($('#rIdentify').data('search-id')) {
 							$('#' + $('#rIdentify').data('search-id')).val(res.data)
+							triggerEvent(document.getElementById($('#rIdentify').data('search-id')), 'change')
 						}
 					}
 				},
@@ -125,13 +141,29 @@ export class RIdentify {
 			})
 		}
 		
+		// 手动触发input change事件
+		function triggerEvent (element, eventName) {
+			if (typeof (element) == 'object') {
+				eventName = eventName.replace(/^on/i, '');
+				if (document.all) {
+					eventName = "on" + eventName;
+					element.triggerEvent(eventName);
+				} else {
+					var evt = document.createEvent('HTMLEvents');
+					evt.initEvent(eventName, true, true);
+					element.dispatchEvent(evt);
+				}
+			}
+		}
+		
+		
 		// 录音提示
 		let setTimeoutTip = null;
 		
 		function inputTip (message) {
 			if ($('#rIdentifyTip')) {
 				$('#rIdentifyTip').remove();
-				if(setTimeoutTip) clearTimeout(setTimeoutTip);
+				if (setTimeoutTip) clearTimeout(setTimeoutTip);
 			}
 			let div = document.createElement('div')
 			div.id = 'rIdentifyTip';
