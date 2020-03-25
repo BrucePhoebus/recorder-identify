@@ -74,13 +74,19 @@ export class RIdentify {
 		
 		// 点击开始录音
 		function startRecord () {
+			if (recordTipObj) {
+				clearInterval(recordTipObj)
+				recordTipObj = null;
+			}
 			if (rec && Recorder.IsOpen()) {
 				rec.start()
-				inputTip(point + '.');
+				setTimeout(() => {
+					inputTip(point + '.');
+				}, 200)
 				recordTipObj = setInterval(() => {
 					point += '.'
 					inputTip(point);
-				}, 1000);
+				}, 800);
 				isRecord = !isRecord
 				startTime = new Date()
 				recordTime = setInterval(function () {
@@ -97,6 +103,7 @@ export class RIdentify {
 		// 结束录音
 		function stopRecord () {
 			clearInterval(recordTipObj)
+			recordTipObj = null;
 			point = ''
 			if (rec) {
 				rec.stop(function (blob, duration) {
@@ -161,21 +168,6 @@ export class RIdentify {
 			}
 		}
 		
-		// 手动触发input change事件
-		function triggerEvent (element, eventName) {
-			if (typeof (element) == 'object') {
-				eventName = eventName.replace(/^on/i, '');
-				if (document.all) {
-					eventName = "on" + eventName;
-					element.triggerEvent(eventName);
-				} else {
-					var evt = document.createEvent('HTMLEvents');
-					evt.initEvent(eventName, true, true);
-					element.dispatchEvent(evt);
-				}
-			}
-		}
-		
 		// 录音提示
 		let setTimeoutTip = null;
 		
@@ -187,8 +179,8 @@ export class RIdentify {
 			}
 			tipElement = document.createElement('div')
 			tipElement.id = 'rIdentifyTip';
-			tipElement.style.cssText = 'position: absolute; top: ' + (getPoint(document.getElementById('rIdentify')).offsetTop - 20) +
-				'px;left: ' + getPoint(document.getElementById('rIdentify')).offsetLeft + 'px;border-radius: 8px;margin-top: -15px;' +
+			tipElement.style.cssText = 'position: fixed; top: ' + (getTop(document.getElementById('rIdentify')) - 20) +
+				'px;left: ' + getLeft(document.getElementById('rIdentify')) + 'px;border-radius: 8px;margin-top: -15px;' +
 				'color: #fff;background-color: #409eff;padding: 5px 0;z-index: 2147483647;'
 			let span = document.createElement('span')
 			span.innerText = message;
@@ -198,21 +190,17 @@ export class RIdentify {
 			setTimeoutTip = setTimeout(() => {
 				tipElement = document.getElementById('rIdentifyTip');
 				tipElement.parentNode.removeChild(tipElement);
-			}, 3000)
+			}, 1000)
 		}
 		
-		function getPoint(obj) { //获取某元素以浏览器左上角为原点的坐标
-			var t = obj.offsetTop; //获取该元素对应父容器的上边距
-			var l = obj.offsetLeft; //对应父容器的上边距
-			//判断是否有父容器，如果存在则累加其边距
-			while (obj = obj.offsetParent) {//等效 obj = obj.offsetParent;while (obj != undefined)
-				t += obj.offsetTop; //叠加父容器的上边距
-				l += obj.offsetLeft; //叠加父容器的左边距
-			}
-			return {
-				offsetTop: t,
-				offsetLeft: l
-			}
+		// 获取纵坐标
+		function getTop (element) {
+			return element.getBoundingClientRect().top;
+		}
+		
+		//获取横坐标
+		function getLeft (element) {
+			return element.getBoundingClientRect().left;
 		}
 		
 		/*
@@ -242,7 +230,7 @@ export class RIdentify {
 			}
 			
 			// 上传进度事件
-			xhr.upload.addEventListener("progress", function(result) {
+			xhr.upload.addEventListener("progress", function (result) {
 				if (result.lengthComputable) {
 					// 上传进度
 					let percent = (result.loaded / result.total * 100).toFixed(0);
@@ -250,7 +238,7 @@ export class RIdentify {
 				}
 			}, false);
 			// 请求结束回调
-			xhr.addEventListener("readystatechange", function() {
+			xhr.addEventListener("readystatechange", function () {
 				if (xhr.readyState == 4 && xhr.status == 200) {
 					opt.success(xhr.response);
 				}
