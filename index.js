@@ -6,7 +6,6 @@
 		url = '/robot/rs/qa/asr',	// 请求的url
 		rec,
 		message = null,
-		isRecord = false,
 		recorderConfig = {
 		numChannels: 1,
 		mimeType: 'audio/wav',
@@ -27,21 +26,19 @@
 				// 监听语音按钮鼠标按下事件
 				document.getElementById('rIdentify').addEventListener('mousedown', function () {
 					// 开始录音
-					if (isRecord !== undefined) {
+					if (!isIE()) {
 						startRecord()
 					} else {
-						// 如果是undefined表示不可用
-						inputTip('请确认麦克风未被禁用！')
+						inputTip('IE浏览器不可录音')
 					}
 				})
 				// 监听语音按钮鼠标释放事件
 				document.getElementById('rIdentify').addEventListener('mouseup', function () {
 					// 开始录音
-					if (isRecord !== undefined) {
+					if (!isIE()) {
 						stopRecord()
 					} else {
-						// 如果是undefined表示不可用
-						inputTip('请确认麦克风未被禁用！')
+						inputTip('IE浏览器不可录音！')
 					}
 				})
 				// 监听input change事件是否手动创建成功
@@ -50,7 +47,7 @@
 				})
 			}
 		};
-		script.src = 'plugins/recorder.wav.min.js';
+		script.src = '../plugins/recorder.wav.min.js';
 		head.appendChild(script);
 	}
 	
@@ -83,14 +80,13 @@
 		}
 		if (rec && Recorder.IsOpen()) {
 			rec.start()
-			setTimeout(() => {
+			setTimeout(function() {
 				inputTip(point + '.');
 			}, 200)
-			recordTipObj = setInterval(() => {
+			recordTipObj = setInterval(function() {
 				point += '.'
 				inputTip(point);
 			}, 800);
-			isRecord = !isRecord
 			startTime = new Date()
 			recordTime = setInterval(function () {
 				if (startTime && new Date().getTime() - startTime.getTime() >= timing) {
@@ -109,7 +105,6 @@
 		point = ''
 		if (rec) {
 			rec.stop(function (blob, duration) {
-				isRecord = !isRecord
 				clearInterval(recordTime)
 				if (startTime && (new Date().getTime() - startTime.getTime() < 1000)) {
 					// 小于1秒当没说话
@@ -190,7 +185,7 @@
 		span.style.cssText = 'margin: 0 10px;white-space: nowrap;'
 		tipElement.appendChild(span)
 		document.getElementById('rIdentify').parentNode.appendChild(tipElement)
-		setTimeoutTip = setTimeout(() => {
+		setTimeoutTip = setTimeout(function() {
 			tipElement = document.getElementById('rIdentifyTip');
 			tipElement.parentNode.removeChild(tipElement);
 		}, 1000)
@@ -260,6 +255,13 @@
 			xhr.open(opt.type, opt.url + '?' + postData, opt.async);
 			xhr.send(null);
 		}
+	}
+	
+	/*
+	* IE判断
+	* */
+	function isIE () {
+		return (window.navigator.userAgentbw && window.navigator.userAgentbw.indexOf('MSIE') >= 0) || 'ActiveXObject' in window
 	}
 	
 })()

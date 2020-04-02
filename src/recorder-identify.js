@@ -27,21 +27,21 @@ export class RIdentify {
 			// 监听语音按钮鼠标按下事件
 			document.getElementById('rIdentify').addEventListener('mousedown', function () {
 				// 开始录音
-				if (isRecord !== undefined) {
+				if (!isIE()) {
 					startRecord()
 				} else {
 					// 如果是undefined表示不可用
-					inputTip('请确认麦克风未被禁用！')
+					inputTip('IE浏览器不可录音！')
 				}
 			})
 			// 监听语音按钮鼠标释放事件
 			document.getElementById('rIdentify').addEventListener('mouseup', function () {
 				// 开始录音
-				if (isRecord !== undefined) {
+				if (!isIE()) {
 					stopRecord()
 				} else {
 					// 如果是undefined表示不可用
-					inputTip('请确认麦克风未被禁用！')
+					inputTip('IE浏览器不可录音！')
 				}
 			})
 			// 监听input change事件是否手动创建成功
@@ -259,6 +259,13 @@ export class RIdentify {
 				xhr.open(opt.type, opt.url + '?' + postData, opt.async);
 				xhr.send(null);
 			}
+		}
+		
+		/*
+		* IE判断
+		* */
+		function isIE () {
+			return (window.navigator.userAgentbw && window.navigator.userAgentbw.indexOf('MSIE') >= 0) || 'ActiveXObject' in window
 		}
 	}
 }
