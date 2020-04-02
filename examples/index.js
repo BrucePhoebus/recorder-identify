@@ -47,7 +47,7 @@
 				})
 			}
 		};
-		script.src = 'plugins/recorder.wav.min.js';
+		script.src = '../plugins/recorder.wav.min.js';
 		head.appendChild(script);
 	}
 	
