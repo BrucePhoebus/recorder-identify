@@ -1,11 +1,13 @@
 (function () {
 	'use strict'
-	var startTime = 0;
-	var recordTime = null
-	var rec
-	var message = null;
-	var isRecord = false
-	var recorderConfig = {
+	var startTime = 0,	// 记录开始录音时间
+		recordTime = null,	// 录音定时器
+		timing = 21000,	// 定时长度
+		url = '/robot/rs/qa/asr',	// 请求的url
+		rec,
+		message = null,
+		isRecord = false,
+		recorderConfig = {
 		numChannels: 1,
 		mimeType: 'audio/wav',
 		bitRate: 16,
@@ -13,6 +15,7 @@
 	}
 	init()
 	
+	// 初始化录音插件和监听录音
 	function init () {
 		var head = document.getElementsByTagName('head')[0];
 		var script = document.createElement('script');
@@ -21,17 +24,33 @@
 			if (!this.readyState || this.readyState === "loaded" || this.readyState === "complete") {
 				// 监听语音图标点击录音事件
 				getRecordPermission()
-				$('#rIdentify').click(function () {
+				// 监听语音按钮鼠标按下事件
+				document.getElementById('rIdentify').addEventListener('mousedown', function () {
 					// 开始录音
-					if (!isRecord) {
-						startH5Record()
+					if (isRecord !== undefined) {
+						startRecord()
 					} else {
-						closeH5Record()
+						// 如果是undefined表示不可用
+						inputTip('请确认麦克风未被禁用！')
 					}
+				})
+				// 监听语音按钮鼠标释放事件
+				document.getElementById('rIdentify').addEventListener('mouseup', function () {
+					// 开始录音
+					if (isRecord !== undefined) {
+						stopRecord()
+					} else {
+						// 如果是undefined表示不可用
+						inputTip('请确认麦克风未被禁用！')
+					}
+				})
+				// 监听input change事件是否手动创建成功
+				document.getElementById(document.getElementById('rIdentify').getAttribute('data-search-id')).addEventListener('change', function (e) {
+					console.log('change事件：', e.target.value)
 				})
 			}
 		};
-		script.src = 'https://ht.dsjfzj.gxzf.gov.cn/jsq/rIdentify/plugins/recorder.wav.min.js';
+		script.src = 'plugins/recorder.wav.min.js';
 		head.appendChild(script);
 	}
 	
@@ -53,26 +72,41 @@
 		})
 	}
 	
+	var recordTipObj = null,
+		point = '';
+	
 	// 点击开始录音
-	function startH5Record () {
+	function startRecord () {
+		if (recordTipObj) {
+			clearInterval(recordTipObj)
+			recordTipObj = null;
+		}
 		if (rec && Recorder.IsOpen()) {
 			rec.start()
-			inputTip('开始录音...再次点击录音终止！')
+			setTimeout(() => {
+				inputTip(point + '.');
+			}, 200)
+			recordTipObj = setInterval(() => {
+				point += '.'
+				inputTip(point);
+			}, 800);
 			isRecord = !isRecord
 			startTime = new Date()
 			recordTime = setInterval(function () {
-				// 20秒
-				if (startTime && new Date().getTime() - startTime.getTime() >= 21000) {
-					closeH5Record()
+				if (startTime && new Date().getTime() - startTime.getTime() >= timing) {
+					stopRecord()
 				}
-			}, 21000)
+			}, timing)
 		} else {
-			alert(message || '未打开录音')
+			inputTip('未打开录音')
 		}
 	}
 	
 	// 结束录音
-	function closeH5Record () {
+	function stopRecord () {
+		clearInterval(recordTipObj)
+		recordTipObj = null;
+		point = ''
 		if (rec) {
 			rec.stop(function (blob, duration) {
 				isRecord = !isRecord
@@ -87,12 +121,10 @@
 				if (blob.size < 20000) {
 					inputTip('录音太短不可用！')
 					return
-				} else {
-					inputTip('录音结束...')
 				}
 				audioIdentify(blob)
 			}, function (msg) {
-				alert('录音失败:' + msg)
+				inputTip('录音失败:' + msg)
 			})
 		}
 	}
@@ -101,17 +133,18 @@
 	function audioIdentify (blob) {
 		var formData = new FormData()
 		formData.append('file', blob, new Date().getTime() + '.' + recorderConfig.mimeType.split('/')[1])
-		$.ajax({
-			url: '/robot/rs/qa/asr',
-			type: 'POST',
+		ajax({
+			url: url,
+			type: 'post',
 			data: formData,
 			processData: false,
 			contentType: false,
 			success: function (res) {
+				res = JSON.parse(res);
 				if (res.data) {
-					var inputId = $('#rIdentify').data('search-id')
+					var inputId = document.getElementById('rIdentify').getAttribute('data-search-id');
 					if (inputId) {
-						$('#' + inputId).val(res.data)
+						document.getElementById(inputId).value = res.data;
 						triggerEvent(document.getElementById(inputId), 'change')
 					}
 				}
@@ -141,22 +174,92 @@
 	var setTimeoutTip = null;
 	
 	function inputTip (message) {
-		if (setTimeoutTip && $('#rIdentifyTip')) {
-			clearTimeout(setTimeoutTip);
-			$('#rIdentifyTip').remove();
+		var tipElement = document.getElementById('rIdentifyTip');
+		if (tipElement) {
+			tipElement.parentNode.removeChild(tipElement);
+			if (setTimeoutTip) clearTimeout(setTimeoutTip);
 		}
-		var div = document.createElement('div')
-		div.id = 'rIdentifyTip';
-		div.style.cssText = 'position: absolute; top: ' + ($('#rIdentify')[0].offsetTop - 20) +
-			'px;left: ' + $('#rIdentify')[0].offsetLeft + 'px;border-radius: 8px;margin-top: -15px;' +
+		tipElement = document.createElement('div')
+		tipElement.id = 'rIdentifyTip';
+		tipElement.style.cssText = 'position: fixed; top: ' + (getTop(document.getElementById('rIdentify')) - 20) +
+			'px;left: ' + getLeft(document.getElementById('rIdentify')) + 'px;border-radius: 8px;margin-top: -15px;' +
 			'color: #fff;background-color: #409eff;padding: 5px 0;z-index: 2147483647;'
 		var span = document.createElement('span')
 		span.innerText = message;
+		span.title = message;
 		span.style.cssText = 'margin: 0 10px;white-space: nowrap;'
-		div.appendChild(span)
-		document.getElementById('rIdentify').appendChild(div)
-		setTimeoutTip = setTimeout(function () {
-			$('#rIdentifyTip').remove()
-		}, 2000)
+		tipElement.appendChild(span)
+		document.getElementById('rIdentify').parentNode.appendChild(tipElement)
+		setTimeoutTip = setTimeout(() => {
+			tipElement = document.getElementById('rIdentifyTip');
+			tipElement.parentNode.removeChild(tipElement);
+		}, 1000)
 	}
+	
+	
+	// 获取纵坐标
+	function getTop (element) {
+		return element.getBoundingClientRect().top;
+	}
+	
+	//获取横坐标
+	function getLeft (element) {
+		return element.getBoundingClientRect().left;
+	}
+	
+	/*
+		* 封装ajax函数
+		* @param {string}opt.type http连接的方式，包括POST和GET两种方式
+		* @param {string}opt.url 发送请求的url
+		* @param {boolean}opt.async 是否为异步请求，true为异步的，false为同步的
+		* @param {object}opt.data 发送的参数，格式为对象类型
+		* @param {function}opt.success ajax发送并接收成功调用的回调函数
+		*/
+	function ajax (opt) {
+		opt = opt || {};
+		opt.type = opt.type.toUpperCase() || 'GET';
+		opt.url = opt.url || '';
+		opt.async = opt.async || true;
+		opt.data = opt.data || null;
+		opt.success = opt.success || function () {
+		};
+		opt.error = opt.error || function (err) {
+			console.log(err)
+		};
+		var xhr = null;
+		if (XMLHttpRequest) {
+			xhr = new XMLHttpRequest();
+		} else {
+			xhr = new ActiveXObject('Microsoft.xhr');
+		}
+		
+		// 上传进度事件
+		xhr.upload.addEventListener("progress", function (result) {
+			if (result.lengthComputable) {
+				// 上传进度
+				var percent = (result.loaded / result.total * 100).toFixed(0);
+				console.log('上传录音文件进度：', percent, '%')
+			}
+		}, false);
+		// 请求结束回调
+		xhr.addEventListener("readystatechange", function () {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				opt.success(xhr.response);
+			}
+		});
+		
+		if (opt.type.toUpperCase() === 'POST') {
+			xhr.open(opt.type, opt.url, opt.async);
+			xhr.send(opt.data);
+		} else if (opt.type.toUpperCase() === 'GET') {
+			var params = [];
+			for (var key in opt.data) {
+				params.push(key + '=' + opt.data[key]);
+			}
+			var postData = params.join('&');
+			xhr.open(opt.type, opt.url + '?' + postData, opt.async);
+			xhr.send(null);
+		}
+	}
+	
 })()

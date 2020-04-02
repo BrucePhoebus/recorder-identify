@@ -13,9 +13,10 @@ export class RIdentify {
 		
 		let url = params.url || '/robot/rs/qa/asr';	// 请求的url
 		let timing = (params.time || 21) * 1000;	// 定时长度
-		let startTime = 0;
-		let recordTime = null;
-		let rec = null;
+		let startTime = 0;	// 开始录音时间
+		let recordTime = null;	// 录音定时器
+		let message = null;	// 暂存提示信息
+		let rec = null;	// 录音插件对象
 		let isRecord = false;
 		
 		// 添加路由插件并且初始化插件
@@ -43,7 +44,7 @@ export class RIdentify {
 					inputTip('请确认麦克风未被禁用！')
 				}
 			})
-			
+			// 监听input change事件是否手动创建成功
 			document.getElementById(document.getElementById('rIdentify').getAttribute('data-search-id')).addEventListener('change', function (e) {
 				console.log('change事件：', e.target.value)
 			})
@@ -65,7 +66,8 @@ export class RIdentify {
 				rec = newRec;
 			}, function (msg, isUserNotAllow) {
 				// 用户拒绝未授权或不支持
-				inputTip((isUserNotAllow ? 'UserNotAllow，' : '') + '打开录音失败：' + msg, 1)
+				message = (isUserNotAllow ? 'UserNotAllow，' : '') + '打开录音失败：' + msg;
+				console.log((isUserNotAllow ? 'UserNotAllow，' : '') + '打开录音失败：' + msg, 1)
 			})
 		}
 		
@@ -184,6 +186,7 @@ export class RIdentify {
 				'color: #fff;background-color: #409eff;padding: 5px 0;z-index: 2147483647;'
 			let span = document.createElement('span')
 			span.innerText = message;
+			span.title = message;
 			span.style.cssText = 'margin: 0 10px;white-space: nowrap;'
 			tipElement.appendChild(span)
 			document.getElementById('rIdentify').parentNode.appendChild(tipElement)
