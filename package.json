@@ -6,7 +6,7 @@
   "scripts": {
     "gulp": "gulp",
     "build": "npm run build:lib && npm run build:browserify",
-    "build:lib": "babel src/ -d lib/",
+    "build:lib": "babel js/https-h5/src/ -d lib/",
     "build:browserify": "browserify lib/index.js -t babelify --outfile dist/rIdentify.js -s rIdentify",
     "browserify": "browserify dist/rIdentify.js dist/rIdentify.min.js",
     "test": "echo \"Error: no test specified\" && exit 1"

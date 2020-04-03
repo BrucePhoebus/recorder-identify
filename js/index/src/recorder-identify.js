@@ -16,7 +16,7 @@ export class RIdentify {
 		let startTime = 0;	// 开始录音时间
 		let recordTime = null;	// 录音定时器
 		let message = null;	// 暂存提示信息
-		let rec = null;	// 录音插件对象
+		let recorder = null;	// 录音插件对象
 		let isRecord = false;
 		
 		// 添加路由插件并且初始化插件
@@ -39,6 +39,9 @@ export class RIdentify {
 				// 开始录音
 				if (!isIE()) {
 					stopRecord()
+					HZRecorder.get(function (rec) {
+						recorder = rec;
+					});
 				} else {
 					// 如果是undefined表示不可用
 					inputTip('IE浏览器不可录音！')
@@ -52,23 +55,9 @@ export class RIdentify {
 		
 		// 获取麦克风权限进行初始化
 		function getRecordPermission () {
-			let newRec = Recorder({
-				type: _this.recorderConfig.mimeType.split('/')[1],
-				bitRate: _this.recorderConfig.bitRate,
-				sampleRate: _this.recorderConfig.sampleRate,
-				disableEnvInFix: true,
-				onProcess: function (buffers, powerLevel, duration, sampleRate, newBufferIdx, asyncEnd) {
-				}
-			})
-			
-			newRec.open(function () {
-				// 打开麦克风授权获得相关资源
-				rec = newRec;
-			}, function (msg, isUserNotAllow) {
-				// 用户拒绝未授权或不支持
-				message = (isUserNotAllow ? 'UserNotAllow，' : '') + '打开录音失败：' + msg;
-				console.log((isUserNotAllow ? 'UserNotAllow，' : '') + '打开录音失败：' + msg, 1)
-			})
+			HZRecorder.get(function (rec) {
+				recorder = rec;
+			});
 		}
 		
 		let recordTipObj = null,
@@ -80,8 +69,8 @@ export class RIdentify {
 				clearInterval(recordTipObj)
 				recordTipObj = null;
 			}
-			if (rec && Recorder.IsOpen()) {
-				rec.start()
+			if (recorder) {
+				recorder.start()
 				setTimeout(() => {
 					inputTip(point + '.');
 				}, 200)
@@ -107,25 +96,22 @@ export class RIdentify {
 			clearInterval(recordTipObj)
 			recordTipObj = null;
 			point = ''
-			if (rec) {
-				rec.stop(function (blob, duration) {
-					isRecord = !isRecord
-					clearInterval(recordTime)
-					if (startTime && (new Date().getTime() - startTime.getTime() < 1000)) {
-						// 小于1秒当没说话
-						startTime = 0
-						return
-					}
+			if (recorder) {
+				recorder.stop();
+				let blob = recorder.getBlob()
+				clearInterval(recordTime)
+				if (startTime && (new Date().getTime() - startTime.getTime() < 1000)) {
+					// 小于1秒当没说话
 					startTime = 0
-					
-					if (blob.size < 20000) {
-						inputTip('录音太短不可用！')
-						return
-					}
-					audioIdentify(blob)
-				}, function (msg) {
-					inputTip('录音失败:' + msg)
-				})
+					return
+				}
+				startTime = 0
+				
+				if (blob.size < 20000) {
+					inputTip('录音太短不可用！')
+					return
+				}
+				audioIdentify(blob)
 			}
 		}
 		

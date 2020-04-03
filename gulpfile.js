@@ -82,6 +82,71 @@ gulp.task('compressJS', function (cb) {
 	.pipe(gulp.dest('dist'));  //输出
 })
 
+
+// 转码编译输出
+gulp.task('browserify_HZRecorder', function (cb) {
+	// 定义入口文件
+	return browserify({
+		// 入口必须是转换过的es6文件，且文件不能是es6经过转换的es5文件，否者会报错
+		entries: 'plugins/HZRecorder.js',
+		debug: true
+	})
+	// 在bundle之前先转换es6，因为readabel stream 流没有transform方法
+	.transform("babelify", {presets: ['es2015', 'stage-0']})
+	// 转成stream流（stream流分小片段传输）
+	.bundle()
+	.on('error', function (error) {
+		console.log(error.toString())
+	})
+	// node系只有content，添加名字转成gulp系可操作的流
+	.pipe(stream('HZRecorder.js'))
+	// 转成二进制的流（二进制方式整体传输）
+	.pipe(buffer())
+	// 输出
+	.pipe(gulp.dest('dist/plugins3'))
+})
+
+// 压缩输出
+gulp.task('compressJS_HZRecorder', function (cb) {
+	del(['dist/plugins3/HZRecorder.min.js'], cb)
+	return gulp.src('plugins/HZRecorder.js')
+	.pipe(uglify({
+		compress: {
+			drop_console: true,  // 过滤 console
+			drop_debugger: true  // 过滤 debugger
+		}
+	}))    //压缩
+	.pipe(rename('HZRecorder.min.js'))
+	.pipe(gulp.dest('dist/plugins3'));  //输出
+})
+
+// 编译压缩成 plugins
+gulp.task('browserify_HZ_rIdentify', function (cb) {
+	del(['dist/plugins3/recorderIdentify.min.js'], cb)
+	return browserify({
+		entries: 'src/index.js',
+		debug: true
+	})
+	.transform("babelify", {presets: ['es2015', 'stage-0']})
+	.bundle()
+	.on('error', function (error) {
+		console.log(error.toString())
+	})
+	.pipe(stream('recorderIdentify.js'))
+	.pipe(buffer())
+	.pipe(uglify({compress: {drop_console: true, drop_debugger: true}}))
+	.pipe(rename('recorderIdentify.min.js'))
+	.pipe(gulp.dest('dist/plugins3'));
+})
+
+// 合并输出
+gulp.task('concat_HZ_RI', function (cb) {
+	del(['dist/rIdentify.min.js'], cb)
+	return gulp.src(['dist/plugins3/HZRecorder.min.js', 'dist/plugins3/recorderIdentify.min.js'])
+	.pipe(concat('rIdentify.min.js'))
+	.pipe(gulp.dest('dist/plugins3'));  //输出
+})
+
 // 合并压缩输出
 gulp.task('concatCompressJS', function (cb) {
 	del(['dist/rIdentify.min.js'], cb)
@@ -145,14 +210,12 @@ gulp.task('browserify_rd_plugin', function (cb) {
 	.pipe(stream('rIdentify.js'))
 	// 转成二进制的流（二进制方式整体传输）
 	.pipe(buffer())
-	.pipe(uglify(
-		/*{
-			compress: {
-				drop_console: true,  // 过滤 console
-				drop_debugger: true  // 过滤 debugger
-			}
-		}*/
-	))    //压缩
+	.pipe(uglify({
+		compress: {
+			drop_console: true,  // 过滤 console
+			drop_debugger: true  // 过滤 debugger
+		}
+	}))    //压缩
 	.pipe(rename('rIdentify.min.js'))
 	.pipe(gulp.dest('plugins'));  //输出
 })
@@ -217,3 +280,6 @@ gulp.task('server', function () {
 
 // 默认任务
 gulp.task('host', gulp.series('server', 'watch'));
+
+gulp.task('HZRecorder', gulp.series('browserify_HZRecorder',
+	'compressJS_HZRecorder', 'browserify_HZ_rIdentify', 'concat_HZ_RI'));

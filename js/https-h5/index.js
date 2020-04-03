@@ -4,14 +4,15 @@
 		recordTime = null,	// 录音定时器
 		timing = 21000,	// 定时长度
 		url = '/robot/rs/qa/asr',	// 请求的url
-		rec,
+		recorder,
 		message = null,
 		recorderConfig = {
-		numChannels: 1,
-		mimeType: 'audio/wav',
-		bitRate: 16,
-		sampleRate: 16000
-	}
+			numChannels: 1,
+			mimeType: 'audio/wav',
+			bitRate: 16,
+			sampleRate: 16000
+		};
+	
 	init()
 	
 	// 初始化录音插件和监听录音
@@ -21,12 +22,12 @@
 		script.type = 'text/javascript';
 		script.onload = script.onreadystatechange = function () {
 			if (!this.readyState || this.readyState === "loaded" || this.readyState === "complete") {
-				// 监听语音图标点击录音事件
+				// 初始化录音
 				getRecordPermission()
 				// 监听语音按钮鼠标按下事件
 				document.getElementById('rIdentify').addEventListener('mousedown', function () {
-					// 开始录音
 					if (!isIE()) {
+						// 开始录音
 						startRecord()
 					} else {
 						inputTip('IE浏览器不可录音！')
@@ -47,7 +48,7 @@
 				})
 			}
 		};
-		script.src = '../plugins/recorder.wav.min.js';
+		script.src = '../../plugins/recorder.wav.min.js';
 		head.appendChild(script);
 	}
 	
@@ -62,7 +63,7 @@
 			}
 		})
 		newRec.open(function () {//打开麦克风授权获得相关资源
-			rec = newRec
+			recorder = newRec
 		}, function (msg, isUserNotAllow) {//用户拒绝未授权或不支持
 			message = (isUserNotAllow ? 'UserNotAllow，' : '') + '打开录音失败：' + msg;
 			console.log((isUserNotAllow ? 'UserNotAllow，' : '') + '打开录音失败：' + msg, 1)
@@ -78,8 +79,8 @@
 			clearInterval(recordTipObj)
 			recordTipObj = null;
 		}
-		if (rec && Recorder.IsOpen()) {
-			rec.start()
+		if (recorder && Recorder.IsOpen()) {
+			recorder.start()
 			setTimeout(function() {
 				inputTip(point + '.');
 			}, 200)
@@ -103,8 +104,8 @@
 		clearInterval(recordTipObj)
 		recordTipObj = null;
 		point = ''
-		if (rec) {
-			rec.stop(function (blob, duration) {
+		if (recorder) {
+			recorder.stop(function (blob, duration) {
 				clearInterval(recordTime)
 				if (startTime && (new Date().getTime() - startTime.getTime() < 1000)) {
 					// 小于1秒当没说话
