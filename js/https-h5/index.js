@@ -22,24 +22,21 @@
 		script.type = 'text/javascript';
 		script.onload = script.onreadystatechange = function () {
 			if (!this.readyState || this.readyState === "loaded" || this.readyState === "complete") {
-				// 初始化录音
+				// 初始化录音插件
 				getRecordPermission()
-				// 监听语音按钮鼠标按下事件
-				document.getElementById('rIdentify').addEventListener('mousedown', function () {
+				// 绑定鼠标事件，兼容微信端
+				bindBtnEvent('rIdentify', function (e) {
 					if (!isIE()) {
 						// 开始录音
 						startRecord()
 					} else {
-						inputTip('IE浏览器不可录音！')
+						inputTip('IE浏览器暂不支持录音！')
 					}
-				})
-				// 监听语音按钮鼠标释放事件
-				document.getElementById('rIdentify').addEventListener('mouseup', function () {
-					// 开始录音
+				}, function (e) {
 					if (!isIE()) {
 						stopRecord()
 					} else {
-						inputTip('IE浏览器不可录音！')
+						inputTip('IE浏览器暂不支持录音！')
 					}
 				})
 				// 监听input change事件是否手动创建成功
@@ -50,6 +47,54 @@
 		};
 		script.src = '../../plugins/recorder.wav.min.js';
 		head.appendChild(script);
+	}
+	
+	/*
+	* 绑定录音点击事件
+	* id：绑定的元素ID
+	* moveOnCallback：点击触发的回调事件
+	* moveUpCallback：鼠标离开或释放的回调事件
+	* */
+	function bindBtnEvent (id, moveOnCallback, moveUpCallback) {
+		if (!isWeChat()) {
+			// 监听语音按钮鼠标按下事件
+			document.getElementById(id).addEventListener('mousedown', moveOnCallback)
+			// 监听语音按钮鼠标释放事件
+			document.getElementById(id).addEventListener('mouseup', moveUpCallback)
+		} else {
+			var timeOutEvent;
+			// 鼠标出发按钮
+			document.getElementById(id).addEventListener('touchstart', function (e) {
+				// 开启定时器前先清除定时器，防止重复触发
+				clearTimeout(timeOutEvent);
+				moveOnCallback();
+				// 开启延时定时器
+				timeOutEvent = setTimeout(function () {
+					// 调用长按之后的逻辑函数func
+					moveUpCallback()
+				}, timing);  // 长按时间
+				e.preventDefault()
+			});
+			// 鼠标离开按钮范围
+			document.getElementById(id).addEventListener('touchmove', function (e) {
+				moveUpCallback()
+				// 长按过程中，手指是不能移动的，若移动则清除定时器，中断长按逻辑
+				clearTimeout(timeOutEvent);
+				timeOutEvent = 0;
+			});
+			// 鼠标释放
+			document.getElementById(id).addEventListener('touchend', function (e) {
+				// 若手指离开屏幕时，时间小于我们设置的长按时间，则为点击事件，清除定时器，结束长按逻辑
+				moveUpCallback()
+				clearTimeout(timeOutEvent);
+				if (timeOutEvent != 0) {
+					// 只是单纯的点击
+					console.log('只是单纯的点击')
+					return false
+				}
+				
+			});
+		}
 	}
 	
 	// 获取麦克风权限进行初始化
@@ -265,4 +310,19 @@
 		return (window.navigator.userAgentbw && window.navigator.userAgentbw.indexOf('MSIE') >= 0) || 'ActiveXObject' in window
 	}
 	
+	/*
+	* 微信浏览器判断
+	* */
+	function isWeChat () {
+		var ua = navigator.userAgent.toLowerCase()
+		if (ua.match(/MicroMessenger/i) == 'micromessenger') {
+			var meta = document.createElement('meta')
+			meta.name = 'viewport'
+			meta.content = 'width=device-width, initial-scale=1, user-scalable=0'
+			document.head.appendChild(meta)
+			return true
+		} else {
+			return false
+		}
+	}
 })()

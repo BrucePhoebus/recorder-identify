@@ -44,30 +44,6 @@ gulp.task('browserify', function (cb) {
 	.pipe(gulp.dest('dist/'))
 })
 
-// 转码编译输出
-gulp.task('browserify-h5-recorder', function (cb) {
-	del(['dist/Recorder.js'], cb)
-	// 定义入口文件
-	return browserify({
-		// 入口必须是转换过的es6文件，且文件不能是es6经过转换的es5文件，否者会报错
-		entries: 'src/recorder-core.js',
-		debug: true
-	})
-	// 在bundle之前先转换es6，因为readabel stream 流没有transform方法
-	.transform("babelify", {presets: ['es2015', 'stage-0']})
-	// 转成stream流（stream流分小片段传输）
-	.bundle()
-	.on('error', function (error) {
-		console.log(error.toString())
-	})
-	// node系只有content，添加名字转成gulp系可操作的流
-	.pipe(stream('Recorder.js'))
-	// 转成二进制的流（二进制方式整体传输）
-	.pipe(buffer())
-	// 输出
-	.pipe(gulp.dest('dist/'))
-})
-
 // 压缩输出
 gulp.task('compressJS', function (cb) {
 	del(['dist/rIdentify.min.js'], cb)
@@ -82,9 +58,12 @@ gulp.task('compressJS', function (cb) {
 	.pipe(gulp.dest('dist'));  //输出
 })
 
-
+/*
+* HZRecorder 录音插件 start
+* */
 // 转码编译输出
 gulp.task('browserify_HZRecorder', function (cb) {
+	del(['dist/hz/HZRecorder.js'], cb)
 	// 定义入口文件
 	return browserify({
 		// 入口必须是转换过的es6文件，且文件不能是es6经过转换的es5文件，否者会报错
@@ -103,28 +82,28 @@ gulp.task('browserify_HZRecorder', function (cb) {
 	// 转成二进制的流（二进制方式整体传输）
 	.pipe(buffer())
 	// 输出
-	.pipe(gulp.dest('dist/plugins3'))
+	.pipe(gulp.dest('dist/hz'))
 })
 
 // 压缩输出
 gulp.task('compressJS_HZRecorder', function (cb) {
-	del(['dist/plugins3/HZRecorder.min.js'], cb)
+	del(['dist/hz/HZRecorder.min.js'], cb)
 	return gulp.src('plugins/HZRecorder.js')
 	.pipe(uglify({
 		compress: {
-			drop_console: true,  // 过滤 console
-			drop_debugger: true  // 过滤 debugger
+			drop_console: true,
+			drop_debugger: true
 		}
 	}))    //压缩
 	.pipe(rename('HZRecorder.min.js'))
-	.pipe(gulp.dest('dist/plugins3'));  //输出
+	.pipe(gulp.dest('dist/hz'));  //输出
 })
 
 // 编译压缩成 plugins
 gulp.task('browserify_HZ_rIdentify', function (cb) {
-	del(['dist/plugins3/recorderIdentify.min.js'], cb)
+	del(['dist/hz/recorderIdentify.min.js'], cb)
 	return browserify({
-		entries: 'src/index.js',
+		entries: 'js/index/src/index.js',
 		debug: true
 	})
 	.transform("babelify", {presets: ['es2015', 'stage-0']})
@@ -136,16 +115,84 @@ gulp.task('browserify_HZ_rIdentify', function (cb) {
 	.pipe(buffer())
 	.pipe(uglify({compress: {drop_console: true, drop_debugger: true}}))
 	.pipe(rename('recorderIdentify.min.js'))
-	.pipe(gulp.dest('dist/plugins3'));
+	.pipe(gulp.dest('dist/hz'));
 })
 
 // 合并输出
 gulp.task('concat_HZ_RI', function (cb) {
-	del(['dist/rIdentify.min.js'], cb)
-	return gulp.src(['dist/plugins3/HZRecorder.min.js', 'dist/plugins3/recorderIdentify.min.js'])
+	del(['dist/hz/rIdentify.min.js'], cb)
+	return gulp.src(['dist/hz/HZRecorder.min.js', 'dist/hz/recorderIdentify.min.js'])
 	.pipe(concat('rIdentify.min.js'))
-	.pipe(gulp.dest('dist/plugins3'));  //输出
+	.pipe(gulp.dest('dist/hz'));  //输出
 })
+
+/*
+* HZRecorder 录音插件 end
+* */
+
+/*
+* https-h5 录音插件 start
+* */
+// 插件压缩
+gulp.task('compressJS_https_h5', function (cb) {
+	del(['dist/https-h5/recorder.wav.min.js'], cb)
+	return gulp.src('plugins/recorder.wav.min.js')
+	.pipe(uglify({
+		compress: {
+			drop_console: true,
+			drop_debugger: true
+		}
+	}))    //压缩
+	.pipe(gulp.dest('dist/https-h5'));  //输出
+})
+
+// 业务代码编译压缩
+gulp.task('browserify_https_h5', function (cb) {
+	del(['dist/https-h5/recorderIdentify.js'], cb)
+	// 定义入口文件
+	return browserify({
+		// 入口必须是转换过的es6文件，且文件不能是es6经过转换的es5文件，否者会报错
+		entries: 'js/https-h5/src/index.js',
+		debug: true
+	})
+	// 在bundle之前先转换es6，因为readabel stream 流没有transform方法
+	.transform("babelify", {presets: ['es2015', 'stage-0']})
+	// 转成stream流（stream流分小片段传输）
+	.bundle()
+	.on('error', function (error) {
+		console.log(error.toString())
+	})
+	// node系只有content，添加名字转成gulp系可操作的流
+	.pipe(stream('recorderIdentify.js'))
+	// 转成二进制的流（二进制方式整体传输）
+	.pipe(buffer())
+	// 输出
+	.pipe(gulp.dest('dist/https-h5'))
+})
+gulp.task('compressJS_https_h5_RI', function (cb) {
+	del(['dist/https-h5/recorderIdentify.min.js'], cb)
+	return gulp.src('dist/https-h5/recorderIdentify.js')
+	.pipe(uglify({
+		compress: {
+			drop_console: true,
+			drop_debugger: true
+		}
+	}))    //压缩
+	.pipe(rename('recorderIdentify.min.js'))
+	.pipe(gulp.dest('dist/https-h5'));  //输出
+})
+
+// 合并输出
+gulp.task('concat_https_h5', function (cb) {
+	del(['dist/https-h5/rIdentify.min.js'], cb)
+	return gulp.src(['dist/https-h5/recorder.wav.min.js', 'dist/https-h5/recorderIdentify.min.js'])
+	.pipe(concat('rIdentify.min.js'))
+	.pipe(gulp.dest('dist/https-h5'));  //输出
+})
+
+/*
+* https-h5 录音插件 end
+* */
 
 // 合并压缩输出
 gulp.task('concatCompressJS', function (cb) {
@@ -283,3 +330,6 @@ gulp.task('host', gulp.series('server', 'watch'));
 
 gulp.task('HZRecorder', gulp.series('browserify_HZRecorder',
 	'compressJS_HZRecorder', 'browserify_HZ_rIdentify', 'concat_HZ_RI'));
+
+gulp.task('https_h5_Recorder', gulp.series('compressJS_https_h5',
+	'browserify_https_h5', 'compressJS_https_h5_RI', 'concat_https_h5'));
