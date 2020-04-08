@@ -99,9 +99,9 @@ gulp.task('compressJS_HZRecorder', function (cb) {
 	.pipe(gulp.dest('dist/hz'));  //输出
 })
 
-// 编译压缩成 plugins
+// 编译
 gulp.task('browserify_HZ_rIdentify', function (cb) {
-	del(['dist/hz/recorderIdentify.min.js'], cb)
+	del(['dist/hz/recorderIdentify.js'], cb)
 	return browserify({
 		entries: 'js/index/src/index.js',
 		debug: true
@@ -113,6 +113,13 @@ gulp.task('browserify_HZ_rIdentify', function (cb) {
 	})
 	.pipe(stream('recorderIdentify.js'))
 	.pipe(buffer())
+	.pipe(gulp.dest('dist/hz'));
+})
+
+// 压缩
+gulp.task('compressJS_HZ_rIdentify', function (cb) {
+	del(['dist/hz/recorderIdentify.min.js'], cb)
+	return gulp.src('dist/hz/recorderIdentify.js')
 	.pipe(uglify({compress: {drop_console: true, drop_debugger: true}}))
 	.pipe(rename('recorderIdentify.min.js'))
 	.pipe(gulp.dest('dist/hz'));
@@ -329,7 +336,7 @@ gulp.task('server', function () {
 gulp.task('host', gulp.series('server', 'watch'));
 
 gulp.task('HZRecorder', gulp.series('browserify_HZRecorder',
-	'compressJS_HZRecorder', 'browserify_HZ_rIdentify', 'concat_HZ_RI'));
+	'compressJS_HZRecorder', 'browserify_HZ_rIdentify', 'compressJS_HZ_rIdentify', 'concat_HZ_RI'));
 
 gulp.task('https_h5_Recorder', gulp.series('compressJS_https_h5',
 	'browserify_https_h5', 'compressJS_https_h5_RI', 'concat_https_h5'));

@@ -1,15 +1,19 @@
 export class RIdentify {
 	
-	recorderConfig = {
+	riConfig = {
 		numChannels: 1,
 		mimeType: 'audio/wav',
 		bitRate: 16,
 		sampleRate: 16000
 	}
 	
+	ri_id = 'rIdentify'
+	
 	constructor (params = {}) {
 		let _this = this;
-		Object.assign(this.recorderConfig, params.config);
+		
+		let id = params.id || _this.ri_id;
+		Object.assign(this.riConfig, params.config);
 		
 		let url = params.url || '/robot/rs/qa/asr';	// 请求的url
 		let timing = (params.time || 21) * 1000;	// 定时长度
@@ -26,7 +30,7 @@ export class RIdentify {
 			// 初始化录音插件
 			getRecordPermission();
 			// 绑定鼠标事件，兼容微信端
-			bindBtnEvent('rIdentify', function (e) {
+			bindBtnEvent(id, function (e) {
 				// 开始录音
 				if (!isIE()) {
 					startRecord()
@@ -45,7 +49,7 @@ export class RIdentify {
 				}
 			})
 			// 监听input change事件是否手动创建成功
-			document.getElementById(document.getElementById('rIdentify').getAttribute('data-search-id')).addEventListener('change', function (e) {
+			document.getElementById(document.getElementById(id).getAttribute('data-search-id')).addEventListener('change', function (e) {
 				console.log('change事件：', e.target.value)
 			})
 		}
@@ -163,7 +167,8 @@ export class RIdentify {
 		// 音频识别成中文
 		function audioIdentify (blob) {
 			let formData = new FormData()
-			formData.append('file', blob, new Date().getTime() + '.' + _this.recorderConfig.mimeType.split('/')[1])
+			let type = _this.riConfig.mimeType ? _this.riConfig.mimeType.split('/')[1] : 'wav';
+			formData.append('file', blob, new Date().getTime() + '.' + type)
 			ajax({
 				url: url,
 				type: 'post',
@@ -173,7 +178,7 @@ export class RIdentify {
 				success: function (res) {
 					res = JSON.parse(res);
 					if (res.data) {
-						let inputId = document.getElementById('rIdentify').getAttribute('data-search-id');
+						let inputId = document.getElementById(id).getAttribute('data-search-id');
 						if (inputId) {
 							document.getElementById(inputId).value = res.data;
 							triggerEvent(document.getElementById(inputId), 'change')
@@ -212,15 +217,15 @@ export class RIdentify {
 			}
 			tipElement = document.createElement('div')
 			tipElement.id = 'rIdentifyTip';
-			tipElement.style.cssText = 'position: fixed; top: ' + (getTop(document.getElementById('rIdentify')) - 20) +
-				'px;left: ' + getLeft(document.getElementById('rIdentify')) + 'px;border-radius: 8px;margin-top: -15px;' +
+			tipElement.style.cssText = 'position: fixed; top: ' + (getTop(document.getElementById(id)) - 20) +
+				'px;left: ' + getLeft(document.getElementById(id)) + 'px;border-radius: 8px;margin-top: -15px;' +
 				'color: #fff;background-color: #409eff;padding: 5px 0;z-index: 2147483647;'
 			let span = document.createElement('span')
 			span.innerText = message;
 			span.title = message;
 			span.style.cssText = 'margin: 0 10px;white-space: nowrap;'
 			tipElement.appendChild(span)
-			document.getElementById('rIdentify').parentNode.appendChild(tipElement)
+			document.getElementById(id).parentNode.appendChild(tipElement)
 			setTimeoutTip = setTimeout(() => {
 				tipElement = document.getElementById('rIdentifyTip');
 				tipElement.parentNode.removeChild(tipElement);
@@ -317,8 +322,9 @@ export class RIdentify {
 	}
 }
 
-export default RIdentify;
+if(window.RIdentify) {
+	window.RIdentify = null;
+};
+window.RIdentify = RIdentify;
 
-(function () {
-	new RIdentify();
-})()
+export default RIdentify;
